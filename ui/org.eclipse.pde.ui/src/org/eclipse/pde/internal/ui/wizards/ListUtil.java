@@ -24,17 +24,7 @@ import org.eclipse.swt.graphics.Image;
 
 public class ListUtil {
 
-	private static final Comparator<?> stringComparator = new Comparator<Object>() {
-
-		@SuppressWarnings("unchecked")
-		public int compare(Object arg0, Object arg1) {
-			if (arg0 instanceof String && arg1 instanceof String)
-				return ((String) arg0).compareToIgnoreCase((String) arg1);
-			// if not two Strings like we expect, then use default comparator
-			return Policy.getComparator().compare(arg0, arg1);
-		}
-
-	};
+	private static final Comparator<String> stringComparator = String.CASE_INSENSITIVE_ORDER;
 
 	static class NameComparator extends ViewerComparator {
 		public NameComparator() {
