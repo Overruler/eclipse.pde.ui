@@ -44,7 +44,7 @@ public class TracingBlock {
 	private Button fTracingCheck;
 	private CheckboxTableViewer fPluginViewer;
 	private IPluginModelBase[] fTraceableModels;
-	private Properties fMasterOptions = new Properties();
+	private Map<String, String> fMasterOptions = new HashMap<String, String>();
 	private Button fSelectAllButton;
 	private Button fDeselectAllButton;
 	private Hashtable<IPluginModelBase, TracingPropertySource> fPropertySources = new Hashtable<IPluginModelBase, TracingPropertySource>();
@@ -202,7 +202,7 @@ public class TracingBlock {
 		disposePropertySources();
 		try {
 			fTracingCheck.setSelection(config.getAttribute(IPDELauncherConstants.TRACING, false));
-			Map<?, ?> options = config.getAttribute(IPDELauncherConstants.TRACING_OPTIONS, (Map<?, ?>) null);
+			Map<String, String> options = config.getAttribute(IPDELauncherConstants.TRACING_OPTIONS, (Map<String, String>) null);
 			if (options == null)
 				options = PDECore.getDefault().getTracingOptionsManager().getTracingTemplateCopy();
 			else
@@ -363,7 +363,7 @@ public class TracingBlock {
 		TracingPropertySource source = fPropertySources.get(model);
 		if (source == null) {
 			String id = model.getPluginBase().getId();
-			Hashtable<?, ?> defaults = PDECore.getDefault().getTracingOptionsManager().getTemplateTable(id);
+			Map<String, Object> defaults = PDECore.getDefault().getTracingOptionsManager().getTemplateTable(id);
 			source = new TracingPropertySource(model, fMasterOptions, defaults, this);
 			fPropertySources.put(model, source);
 		}

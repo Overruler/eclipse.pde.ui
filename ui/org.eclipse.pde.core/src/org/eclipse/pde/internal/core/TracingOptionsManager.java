@@ -12,6 +12,7 @@ package org.eclipse.pde.internal.core;
 
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.eclipse.core.runtime.IPath;
@@ -20,14 +21,14 @@ import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.core.plugin.PluginRegistry;
 
 public class TracingOptionsManager {
-	private Properties template;
+	private Map<String, String> template;
 
 	public TracingOptionsManager() {
 		super();
 	}
 
 	private void createTemplate() {
-		template = new Properties();
+		template = new HashMap<String, String>();
 		IPluginModelBase[] models = PluginRegistry.getAllModels();
 		for (int i = 0; i < models.length; i++) {
 			addToTemplate(models[i]);
@@ -42,16 +43,16 @@ public class TracingOptionsManager {
 			String key = keys.nextElement().toString();
 			String value = modelOptions.getProperty(key);
 			if (key != null && value != null)
-				template.setProperty(key, value);
+				template.put(key, value);
 		}
 	}
 
-	public Hashtable<String, Object> getTemplateTable(String pluginId) {
+	public Map<String, Object> getTemplateTable(String pluginId) {
 		if (template == null)
 			createTemplate();
-		Hashtable<String, Object> defaults = new Hashtable<String, Object>();
-		for (Enumeration<Object> keys = template.keys(); keys.hasMoreElements();) {
-			String key = keys.nextElement().toString();
+		Map<String, Object> defaults = new HashMap<>();
+		for (Map.Entry<String, String> entry : template.entrySet()) {
+			String key = entry.getValue();
 			if (belongsTo(key, pluginId)) {
 				defaults.put(key, template.get(key));
 			}
@@ -65,26 +66,24 @@ public class TracingOptionsManager {
 		return pluginId.equalsIgnoreCase(firstSegment);
 	}
 
-	public Properties getTracingOptions(Map<?, ?> storedOptions) {
+	public Map<String, String> getTracingOptions(Map<String, String> storedOptions) {
 		// Start with the fresh template from plugins
-		Properties defaults = getTracingTemplateCopy();
+		Map<String, String> defaults = getTracingTemplateCopy();
 		if (storedOptions != null) {
 			// Load stored values, but only for existing keys
-			Iterator<?> iter = storedOptions.keySet().iterator();
-			while (iter.hasNext()) {
-				String key = iter.next().toString();
+			for (String key : storedOptions.keySet()) {
 				if (defaults.containsKey(key)) {
-					defaults.setProperty(key, (String) storedOptions.get(key));
+					defaults.put(key, storedOptions.get(key));
 				}
 			}
 		}
 		return defaults;
 	}
 
-	public Properties getTracingTemplateCopy() {
+	public Map<String, String> getTracingTemplateCopy() {
 		if (template == null)
 			createTemplate();
-		return (Properties) template.clone();
+		return new HashMap<>(template);
 	}
 
 	public static boolean isTraceable(IPluginModelBase model) {
@@ -122,11 +121,13 @@ public class TracingOptionsManager {
 		template = null;
 	}
 
-	private void save(String fileName, Properties properties) {
+	public void save(String fileName, Map<String, String> properties) {
 		FileOutputStream stream = null;
 		try {
 			stream = new FileOutputStream(fileName);
-			properties.store(stream, "Master Tracing Options"); //$NON-NLS-1$
+			Properties properties2 = new Properties();
+			properties2.putAll(properties);
+			properties2.store(stream, "Master Tracing Options"); //$NON-NLS-1$
 			stream.flush();
 		} catch (IOException e) {
 			PDECore.logException(e);
@@ -140,20 +141,16 @@ public class TracingOptionsManager {
 		}
 	}
 
-	public void save(String filename, Map<?, ?> map, HashSet<?> selected) {
-		Properties properties = getTracingOptions(map);
-		for (Enumeration<?> keys = properties.keys(); keys.hasMoreElements();) {
-			String key = keys.nextElement().toString();
+	public void save(String filename, Map<String, String> map, HashSet<?> selected) {
+		Map<String, String> properties = getTracingOptions(map);
+		for (Entry<String, String> entry : properties.entrySet()) {
+			String key = entry.getKey();
 			Path path = new Path(key);
 			if (path.segmentCount() < 1 || !selected.contains(path.segment(0).toString())) {
 				properties.remove(key);
 			}
 		}
 		save(filename, properties);
-	}
-
-	public void save(String filename, Map<?, ?> map) {
-		save(filename, getTracingOptions(map));
 	}
 
 	private Properties getOptions(IPluginModelBase model) {

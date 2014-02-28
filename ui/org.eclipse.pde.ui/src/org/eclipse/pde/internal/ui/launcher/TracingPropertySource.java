@@ -23,10 +23,10 @@ import org.eclipse.ui.forms.widgets.TableWrapLayout;
 public class TracingPropertySource {
 	private IPluginModelBase fModel;
 	private Vector<PropertyEditor> fDescriptors;
-	private Hashtable<?, ?> fTemplate;
-	private Hashtable<String, Object> fValues;
+	private Map<String, Object> fTemplate;
+	private Map<String, Object> fValues;
 	private static final String[] fBooleanChoices = {"false", "true"}; //$NON-NLS-1$ //$NON-NLS-2$
-	private Properties fMasterOptions;
+	private Map<String, String> fMasterOptions;
 	private boolean fModified;
 	private TracingBlock fBlock;
 
@@ -124,12 +124,12 @@ public class TracingPropertySource {
 		}
 	}
 
-	public TracingPropertySource(IPluginModelBase model, Properties masterOptions, Hashtable<?, ?> template, TracingBlock block) {
+	public TracingPropertySource(IPluginModelBase model, Map<String, String> masterOptions, Map<String, Object> template, TracingBlock block) {
 		fModel = model;
 		fMasterOptions = masterOptions;
 		fTemplate = template;
 		fBlock = block;
-		fValues = new Hashtable<String, Object>();
+		fValues = new HashMap<>();
 	}
 
 	public IPluginModelBase getModel() {
@@ -139,8 +139,7 @@ public class TracingPropertySource {
 	private Object[] getSortedKeys(int size) {
 		Object[] keyArray = new Object[size];
 		int i = 0;
-		for (Enumeration<?> keys = fTemplate.keys(); keys.hasMoreElements();) {
-			String key = (String) keys.nextElement();
+		for (String key : fTemplate.keySet()) {
 			keyArray[i++] = key;
 		}
 		Arrays.sort(keyArray, new Comparator<Object>() {
@@ -172,7 +171,7 @@ public class TracingPropertySource {
 			String shortKey = path.toString();
 			String value = (String) fTemplate.get(key);
 			String lvalue = null;
-			String masterValue = fMasterOptions.getProperty(key);
+			String masterValue = fMasterOptions.get(key);
 			PropertyEditor editor;
 			if (value != null)
 				lvalue = value.toLowerCase(Locale.ENGLISH);
@@ -203,14 +202,13 @@ public class TracingPropertySource {
 	 */
 	public void save() {
 		String pid = fModel.getPluginBase().getId();
-		for (Enumeration<String> keys = fValues.keys(); keys.hasMoreElements();) {
-			String shortKey = keys.nextElement();
+		for (String shortKey : fValues.keySet()) {
 			Object value = fValues.get(shortKey);
 			String svalue = value.toString();
 			if (value instanceof Integer)
 				svalue = fBooleanChoices[((Integer) value).intValue()];
 			IPath path = new Path(pid).append(shortKey);
-			fMasterOptions.setProperty(path.toString(), svalue);
+			fMasterOptions.put(path.toString(), svalue);
 		}
 		fModified = false;
 	}

@@ -1173,8 +1173,7 @@ public class FeatureBlock {
 			tree.setInput(models);
 
 			// Loop through the saved config to determine location settings and selection
-			@SuppressWarnings("unchecked")
-			Set<Object> selected = config.getAttribute(IPDELauncherConstants.SELECTED_FEATURES, (Set<Object>) null);
+			Set<String> selected = config.getAttribute(IPDELauncherConstants.SELECTED_FEATURES, (Set<String>) null);
 			if (selected == null) {
 				tree.setCheckedElements(fFeatureModels.values().toArray());
 			} else {
